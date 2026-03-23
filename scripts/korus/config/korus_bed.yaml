@@ -1,0 +1,30 @@
+env_usd: "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Environments/Grid/default_environment.usd"
+korusbed_usd: "file:///home/rutwik/IsaacLab/scripts/korus/assets/inflatable_cell_all.usd"
+# humanoid_usd: "file:///home/rutwik/IsaacLab/scripts/korus/assets/usd/softbody_humanoid.usd"
+humanoid_usd: "file:///home/rutwik/IsaacLab/scripts/korus/assets/usd/0005/humanoid_0005.usd"
+
+# geometry / layout
+ground_to_base_bottom : 0.9
+base_size             : [1.0, 1.0, 0.1]
+# foam_size: [1.0, 1.0, 0.4]
+foam_size             : [1.0, 1.0, .2]
+sphere_radius         : 0.2
+base_origin_xy        : [-1.65, 3.85]
+sphere_origin_z       : 3.0
+node_spacing          : 1.1
+decimals              : 1
+foam_mass             : 10
+humanoid_scale        : [3.3, 3.3, 3.3]
+
+# scene grid (defaults can still be overridden via CLI --num_rows/--num_cols)
+rows: 8
+cols: 4
+
+# material (optional; tweak to taste)
+material:
+  poissons_ratio      : 0.2
+  youngs_modulus      : 5e5
+  dynamic_friction    : 0.95
+  elasticity_damping  : 0.05
+  damping_scale       : 1.0
+  hexa_res            : 12

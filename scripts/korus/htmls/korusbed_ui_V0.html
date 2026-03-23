@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KorusBed Teleop Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            gap: 20px;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .sidebar {
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 0;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .connection-info {
+            text-align: left;
+            margin-bottom: 0;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .connection-info div {
+            margin-bottom: 5px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+            margin-bottom: 15px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 9px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+            color: #495057;
+            user-select: none;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+
+        .cell.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .cell.active {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .inflate-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .inflate-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        .inflate-btn:active:not(:disabled) {
+            background: linear-gradient(135deg, #0d7a6f 0%, #2dd66a 100%);
+        }
+
+        .deflate-btn {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .deflate-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(235, 51, 73, 0.4);
+        }
+
+        .deflate-btn:active:not(:disabled) {
+            background: linear-gradient(135deg, #c92a3d 0%, #d44d38 100%);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .info {
+            text-align: left;
+            margin-top: 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .info div {
+            margin-bottom: 5px;
+        }
+
+        .info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <h1>🎛️ KorusBed Control</h1>
+            
+            <div class="grid-container" id="grid"></div>
+
+            <div class="controls">
+                <button id="inflate-btn" class="control-btn inflate-btn" 
+                        onmousedown="startInflate()" onmouseup="stopInflate()" 
+                        onmouseleave="stopInflate()" ontouchstart="startInflate()" 
+                        ontouchend="stopInflate()" ontouchcancel="stopInflate()">
+                    ⬆️ Inflate
+                </button>
+                <button id="deflate-btn" class="control-btn deflate-btn" 
+                        onmousedown="startDeflate()" onmouseup="stopDeflate()" 
+                        onmouseleave="stopDeflate()" ontouchstart="startDeflate()" 
+                        ontouchend="stopDeflate()" ontouchcancel="stopDeflate()">
+                    ⬇️ Deflate
+                </button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="selectAll()">Select All</button>
+                <button class="action-btn" onclick="clearSelection()">Clear</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div id="status" class="status disconnected">Disconnected</div>
+            
+            <div class="connection-info">
+                <div><strong>ROS Bridge:</strong></div>
+                <div id="rosbridge-url">ws://localhost:9090</div>
+                <div style="margin-top: 8px;"><strong>Topic:</strong></div>
+                <div id="topic-name">/korusbed/joint_pos_target</div>
+            </div>
+
+            <div class="info">
+                <div><strong>Selected:</strong> <span id="selected-count">0</span> cells</div>
+                <div><strong>Step:</strong> 0.001</div>
+                <div><strong>Range:</strong> 0.0 - 0.9</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    <script>
+        // Configuration
+        const CONFIG = {
+            rosbridgeUrl: 'ws://localhost:9090',
+            topic: '/korusbed/joint_pos_target',
+            step: 0.001,
+            minPos: 0.0,
+            maxPos: 0.9,
+            rateHz: 120.0,
+            numCells: 32,
+            rows: 8,
+            cols: 4
+        };
+
+        // State
+        let ros = null;
+        let publisher = null;
+        let selectedCells = new Set();
+        let cellPositions = {}; // joint name -> current position
+        let inflateInterval = null;
+        let deflateInterval = null;
+        let isInflating = false;
+        let isDeflating = false;
+
+        // Initialize cell positions
+        for (let i = 0; i < CONFIG.numCells; i++) {
+            cellPositions[`PrismaticJoint${i}`] = CONFIG.minPos;
+        }
+
+        // Create grid
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < CONFIG.numCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = i + 1; // Display as index + 1
+                cell.dataset.index = i;
+                cell.onclick = () => toggleCell(i);
+                grid.appendChild(cell);
+            }
+        }
+
+        // Toggle cell selection
+        function toggleCell(index) {
+            if (selectedCells.has(index)) {
+                selectedCells.delete(index);
+            } else {
+                selectedCells.add(index);
+            }
+            updateCellDisplay();
+            updateSelectedCount();
+        }
+
+        // Update cell visual state
+        function updateCellDisplay() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                const index = parseInt(cell.dataset.index);
+                if (selectedCells.has(index)) {
+                    cell.classList.add('selected');
+                } else {
+                    cell.classList.remove('selected');
+                }
+            });
+        }
+
+        // Update selected count display
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = selectedCells.size;
+        }
+
+        // Select all cells
+        function selectAll() {
+            for (let i = 0; i < CONFIG.numCells; i++) {
+                selectedCells.add(i);
+            }
+            updateCellDisplay();
+            updateSelectedCount();
+        }
+
+        // Clear selection
+        function clearSelection() {
+            selectedCells.clear();
+            updateCellDisplay();
+            updateSelectedCount();
+        }
+
+        // Connect to ROS
+        function connectROS() {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status connecting';
+            statusEl.textContent = 'Connecting...';
+
+            ros = new ROSLIB.Ros({
+                url: CONFIG.rosbridgeUrl
+            });
+
+            ros.on('connection', () => {
+                statusEl.className = 'status connected';
+                statusEl.textContent = 'Connected';
+                
+                publisher = new ROSLIB.Topic({
+                    ros: ros,
+                    name: CONFIG.topic,
+                    messageType: 'sensor_msgs/JointState'
+                });
+            });
+
+            ros.on('error', (error) => {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = 'Connection Error';
+                console.error('ROS connection error:', error);
+            });
+
+            ros.on('close', () => {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = 'Disconnected';
+                publisher = null;
+            });
+        }
+
+        // Publish joint state
+        function publishJointState(jointNames, positions) {
+            if (!publisher) {
+                console.warn('Publisher not ready');
+                return;
+            }
+
+            const msg = new ROSLIB.Message({
+                header: {
+                    stamp: {
+                        sec: Math.floor(Date.now() / 1000),
+                        nanosec: (Date.now() % 1000) * 1000000
+                    },
+                    frame_id: ''
+                },
+                name: jointNames,
+                position: positions
+            });
+
+            publisher.publish(msg);
+        }
+
+        // Apply step to selected joints
+        function applyStep(sign) {
+            if (selectedCells.size === 0) {
+                return;
+            }
+
+            const jointNames = [];
+            const positions = [];
+
+            selectedCells.forEach(index => {
+                const jointName = `PrismaticJoint${index}`;
+                const currentPos = cellPositions[jointName] || CONFIG.minPos;
+                const newPos = Math.max(
+                    CONFIG.minPos,
+                    Math.min(CONFIG.maxPos, currentPos + sign * CONFIG.step)
+                );
+                
+                cellPositions[jointName] = newPos;
+                jointNames.push(jointName);
+                positions.push(newPos);
+            });
+
+            if (jointNames.length > 0) {
+                publishJointState(jointNames, positions);
+            }
+        }
+
+        // Start inflating
+        function startInflate() {
+            if (selectedCells.size === 0 || isInflating) return;
+            
+            stopDeflate(); // Stop deflate if active
+            
+            isInflating = true;
+            const period = 1000 / CONFIG.rateHz;
+            
+            // Apply immediately
+            applyStep(1.0);
+            
+            // Continue applying at rate
+            inflateInterval = setInterval(() => {
+                applyStep(1.0);
+            }, period);
+
+            // Visual feedback
+            document.getElementById('inflate-btn').style.opacity = '0.8';
+            selectedCells.forEach(index => {
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                if (cell) cell.classList.add('active');
+            });
+        }
+
+        // Stop inflating
+        function stopInflate() {
+            if (!isInflating) return;
+            
+            isInflating = false;
+            if (inflateInterval) {
+                clearInterval(inflateInterval);
+                inflateInterval = null;
+            }
+
+            // Visual feedback
+            document.getElementById('inflate-btn').style.opacity = '1';
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('active');
+            });
+        }
+
+        // Start deflating
+        function startDeflate() {
+            if (selectedCells.size === 0 || isDeflating) return;
+            
+            stopInflate(); // Stop inflate if active
+            
+            isDeflating = true;
+            const period = 1000 / CONFIG.rateHz;
+            
+            // Apply immediately
+            applyStep(-1.0);
+            
+            // Continue applying at rate
+            deflateInterval = setInterval(() => {
+                applyStep(-1.0);
+            }, period);
+
+            // Visual feedback
+            document.getElementById('deflate-btn').style.opacity = '0.8';
+            selectedCells.forEach(index => {
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                if (cell) cell.classList.add('active');
+            });
+        }
+
+        // Stop deflating
+        function stopDeflate() {
+            if (!isDeflating) return;
+            
+            isDeflating = false;
+            if (deflateInterval) {
+                clearInterval(deflateInterval);
+                deflateInterval = null;
+            }
+
+            // Visual feedback
+            document.getElementById('deflate-btn').style.opacity = '1';
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('active');
+            });
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            createGrid();
+            connectROS();
+            updateSelectedCount();
+        });
+
+        // Prevent context menu on long press (mobile)
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.classList.contains('control-btn')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KorusBed Teleop Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            gap: 20px;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .sidebar {
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 0;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .connection-info {
+            text-align: left;
+            margin-bottom: 0;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .connection-info div {
+            margin-bottom: 5px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+            margin-bottom: 15px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 9px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+            color: #495057;
+            user-select: none;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+
+        .cell.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .cell.active {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .inflate-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .inflate-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        .inflate-btn:active:not(:disabled) {
+            background: linear-gradient(135deg, #0d7a6f 0%, #2dd66a 100%);
+        }
+
+        .deflate-btn {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .deflate-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(235, 51, 73, 0.4);
+        }
+
+        .deflate-btn:active:not(:disabled) {
+            background: linear-gradient(135deg, #c92a3d 0%, #d44d38 100%);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .info {
+            text-align: left;
+            margin-top: 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .info div {
+            margin-bottom: 5px;
+        }
+
+        .info strong {
+            color: #333;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .input-group label {
+            font-size: 11px;
+            color: #666;
+            min-width: 50px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-group label {
+            font-size: 11px;
+            color: #666;
+            min-width: 50px;
+        }
+
+        .api-status {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .api-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .api-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .api-status.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <h1>🎛️ KorusBed Control</h1>
+            
+            <div class="grid-container" id="grid"></div>
+
+            <div class="controls">
+                <button id="inflate-btn" class="control-btn inflate-btn" 
+                        onmousedown="startInflate()" onmouseup="stopInflate()" 
+                        onmouseleave="stopInflate()" ontouchstart="startInflate()" 
+                        ontouchend="stopInflate()" ontouchcancel="stopInflate()">
+                    ⬆️ Inflate
+                </button>
+                <button id="deflate-btn" class="control-btn deflate-btn" 
+                        onmousedown="startDeflate()" onmouseup="stopDeflate()" 
+                        onmouseleave="stopDeflate()" ontouchstart="startDeflate()" 
+                        ontouchend="stopDeflate()" ontouchcancel="stopDeflate()">
+                    ⬇️ Deflate
+                </button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="selectAll()">Select All</button>
+                <button class="action-btn" onclick="clearSelection()">Clear</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="info">
+                <div style="margin-bottom: 8px;"><strong>ROS Settings:</strong></div>
+                <div id="status" class="status disconnected" style="margin-bottom: 10px;">Disconnected</div>
+                <button id="reconnect-btn" class="action-btn" onclick="connectROS()" style="margin-bottom: 10px; width: 100%; flex: 0 0 auto; padding: 6px 8px; font-size: 11px;">Reconnect</button>
+                
+                <div style="margin-bottom: 8px;"><strong>ROS Bridge:</strong></div>
+                <div id="rosbridge-url" style="margin-bottom: 8px;">ws://localhost:9090</div>
+                <div style="margin-bottom: 8px;"><strong>Topic:</strong></div>
+                <div id="topic-name" style="margin-bottom: 10px;">/korusbed/joint_pos_target</div>
+                
+                <div style="margin-top: 10px; margin-bottom: 8px;"><strong>Settings:</strong></div>
+                <div class="input-group">
+                    <label>Step:</label>
+                    <input type="number" id="step-input" step="0.001" min="0.0001" max="0.1" value="0.001" onchange="updateStep()">
+                </div>
+                <div class="input-group">
+                    <label>Rate (Hz):</label>
+                    <input type="number" id="rate-input" step="1" min="1" max="200" value="120" onchange="updateRate()">
+                </div>
+                <div style="margin-top: 8px;"><strong>Range:</strong> 0.0 - 0.9</div>
+            </div>
+
+            <div class="info" style="margin-top: 15px;">
+                <div style="margin-bottom: 8px;"><strong>API Sync:</strong></div>
+                <div class="toggle-group">
+                    <label>Sync:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sync-toggle" onchange="toggleSync()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span id="api-status" class="api-status disconnected">Disconnected</span>
+                </div>
+                <div class="input-group">
+                    <label>API URL:</label>
+                    <input type="text" id="api-url-input" value="http://100.125.237.101:8000" onchange="updateApiUrl()">
+                </div>
+                <button id="api-reconnect-btn" class="action-btn" onclick="reconnectAPI()" style="margin-top: 8px; width: 100%; flex: 0 0 auto; padding: 6px 8px; font-size: 11px;">Reconnect</button>
+            </div>
+
+            <div class="info" style="margin-top: 15px;">
+                <div><strong>Selected:</strong> <span id="selected-count">0</span> cells</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    <script>
+        // Configuration
+        const CONFIG = {
+            rosbridgeUrl: 'ws://localhost:9090',
+            topic: '/korusbed/joint_pos_target',
+            step: 0.001,
+            minPos: 0.0,
+            maxPos: 0.9,
+            rateHz: 120.0,
+            numCells: 32,
+            rows: 8,
+            cols: 4,
+            apiBaseUrl: 'http://100.125.237.101:8000'
+        };
+
+        // State
+        let ros = null;
+        let publisher = null;
+        let isConnected = false;
+        let selectedCells = new Set();
+        let cellPositions = {}; // joint name -> current position
+        let inflateInterval = null;
+        let deflateInterval = null;
+        let isInflating = false;
+        let isDeflating = false;
+        let syncEnabled = false;
+        let apiConnected = false;
+        let healthCheckInterval = null;
+
+        // Initialize cell positions
+        for (let i = 0; i < CONFIG.numCells; i++) {
+            cellPositions[`PrismaticJoint${i}`] = CONFIG.minPos;
+        }
+
+        // Create grid
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < CONFIG.numCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = i + 1; // Display as index + 1
+                cell.dataset.index = i;
+                cell.onclick = () => toggleCell(i);
+                grid.appendChild(cell);
+            }
+        }
+
+        // Toggle cell selection
+        function toggleCell(index) {
+            if (selectedCells.has(index)) {
+                selectedCells.delete(index);
+            } else {
+                selectedCells.add(index);
+            }
+            updateCellDisplay();
+            updateSelectedCount();
+            updateButtonStates();
+        }
+
+        // Update cell visual state
+        function updateCellDisplay() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                const index = parseInt(cell.dataset.index);
+                if (selectedCells.has(index)) {
+                    cell.classList.add('selected');
+                } else {
+                    cell.classList.remove('selected');
+                }
+            });
+        }
+
+        // Update selected count display
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = selectedCells.size;
+        }
+
+        // Select all cells
+        function selectAll() {
+            for (let i = 0; i < CONFIG.numCells; i++) {
+                selectedCells.add(i);
+            }
+            updateCellDisplay();
+            updateSelectedCount();
+            updateButtonStates();
+        }
+
+        // Clear selection
+        function clearSelection() {
+            selectedCells.clear();
+            updateCellDisplay();
+            updateSelectedCount();
+            updateButtonStates();
+        }
+
+        // Connect to ROS
+        function connectROS() {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status connecting';
+            statusEl.textContent = 'Connecting...';
+            isConnected = false;
+
+            // Close existing connection if any
+            if (ros) {
+                try {
+                    ros.close();
+                } catch (e) {
+                    console.warn('Error closing existing connection:', e);
+                }
+            }
+
+            ros = new ROSLIB.Ros({
+                url: CONFIG.rosbridgeUrl
+            });
+
+            ros.on('connection', () => {
+                isConnected = true;
+                statusEl.className = 'status connected';
+                statusEl.textContent = 'Connected';
+                
+                try {
+                    publisher = new ROSLIB.Topic({
+                        ros: ros,
+                        name: CONFIG.topic,
+                        messageType: 'sensor_msgs/JointState'
+                    });
+                } catch (error) {
+                    console.error('Error creating publisher:', error);
+                    isConnected = false;
+                    statusEl.className = 'status disconnected';
+                    statusEl.textContent = 'Publisher Error';
+                }
+            });
+
+            ros.on('error', (error) => {
+                isConnected = false;
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = 'Connection Error';
+                publisher = null;
+                console.error('ROS connection error:', error);
+            });
+
+            ros.on('close', () => {
+                isConnected = false;
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = 'Disconnected';
+                publisher = null;
+            });
+        }
+
+        // Update button states based on cell selection
+        function updateButtonStates() {
+            const inflateBtn = document.getElementById('inflate-btn');
+            const deflateBtn = document.getElementById('deflate-btn');
+            
+            if (selectedCells.size === 0) {
+                inflateBtn.disabled = true;
+                deflateBtn.disabled = true;
+            } else {
+                inflateBtn.disabled = false;
+                deflateBtn.disabled = false;
+            }
+        }
+
+        // Publish joint state
+        function publishJointState(jointNames, positions) {
+            if (!isConnected || !publisher) {
+                console.warn('Publisher not ready - connection status:', isConnected);
+                return;
+            }
+
+            try {
+                const msg = new ROSLIB.Message({
+                    header: {
+                        stamp: {
+                            sec: Math.floor(Date.now() / 1000),
+                            nanosec: (Date.now() % 1000) * 1000000
+                        },
+                        frame_id: ''
+                    },
+                    name: jointNames,
+                    position: positions
+                });
+
+                publisher.publish(msg);
+            } catch (error) {
+                console.error('Error publishing message:', error);
+                // If publish fails, mark as disconnected
+                if (ros && ros.isConnected) {
+                    // Connection might still be open but publisher failed
+                    console.warn('Publish failed but connection appears open');
+                } else {
+                    isConnected = false;
+                    updateButtonStates();
+                    const statusEl = document.getElementById('status');
+                    statusEl.className = 'status disconnected';
+                    statusEl.textContent = 'Publish Error';
+                }
+            }
+        }
+
+        // Apply step to selected joints
+        function applyStep(sign) {
+            if (selectedCells.size === 0) {
+                return;
+            }
+
+            const jointNames = [];
+            const positions = [];
+
+            selectedCells.forEach(index => {
+                const jointName = `PrismaticJoint${index}`;
+                const currentPos = cellPositions[jointName] || CONFIG.minPos;
+                const newPos = Math.max(
+                    CONFIG.minPos,
+                    Math.min(CONFIG.maxPos, currentPos + sign * CONFIG.step)
+                );
+                
+                cellPositions[jointName] = newPos;
+                jointNames.push(jointName);
+                positions.push(newPos);
+            });
+
+            if (jointNames.length > 0) {
+                publishJointState(jointNames, positions);
+            }
+        }
+
+        // Start inflating
+        function startInflate() {
+            if (selectedCells.size === 0 || isInflating) return;
+            
+            stopDeflate(); // Stop deflate if active
+            
+            isInflating = true;
+            const period = 1000 / CONFIG.rateHz;
+            
+            // Send START command to API if sync is enabled
+            if (syncEnabled && apiConnected) {
+                // Convert 0-based indices to 1-based node IDs (matching UI display)
+                const nodeIds = Array.from(selectedCells).map(idx => idx + 1);
+                callInflateAPI(nodeIds, 'START').catch(err => {
+                    console.error('Failed to sync inflate START to API:', err);
+                });
+            }
+            
+            // Apply immediately
+            applyStep(1.0);
+            
+            // Continue applying at rate
+            inflateInterval = setInterval(() => {
+                applyStep(1.0);
+            }, period);
+
+            // Visual feedback
+            document.getElementById('inflate-btn').style.opacity = '0.8';
+            selectedCells.forEach(index => {
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                if (cell) cell.classList.add('active');
+            });
+        }
+
+        // Stop inflating
+        function stopInflate() {
+            if (!isInflating) return;
+            
+            isInflating = false;
+            if (inflateInterval) {
+                clearInterval(inflateInterval);
+                inflateInterval = null;
+            }
+
+            // Send STOP command to API if sync is enabled
+            if (syncEnabled && apiConnected) {
+                // Convert 0-based indices to 1-based node IDs (matching UI display)
+                const nodeIds = Array.from(selectedCells).map(idx => idx + 1);
+                callInflateAPI(nodeIds, 'STOP').catch(err => {
+                    console.error('Failed to sync inflate STOP to API:', err);
+                });
+            }
+
+            // Visual feedback
+            document.getElementById('inflate-btn').style.opacity = '1';
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('active');
+            });
+        }
+
+        // Start deflating
+        function startDeflate() {
+            if (selectedCells.size === 0 || isDeflating) return;
+            
+            stopInflate(); // Stop inflate if active
+            
+            isDeflating = true;
+            const period = 1000 / CONFIG.rateHz;
+            
+            // Send START command to API if sync is enabled
+            if (syncEnabled && apiConnected) {
+                // Convert 0-based indices to 1-based node IDs (matching UI display)
+                const nodeIds = Array.from(selectedCells).map(idx => idx + 1);
+                callDeflateAPI(nodeIds, 'START').catch(err => {
+                    console.error('Failed to sync deflate START to API:', err);
+                });
+            }
+            
+            // Apply immediately
+            applyStep(-1.0);
+            
+            // Continue applying at rate
+            deflateInterval = setInterval(() => {
+                applyStep(-1.0);
+            }, period);
+
+            // Visual feedback
+            document.getElementById('deflate-btn').style.opacity = '0.8';
+            selectedCells.forEach(index => {
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                if (cell) cell.classList.add('active');
+            });
+        }
+
+        // Stop deflating
+        function stopDeflate() {
+            if (!isDeflating) return;
+            
+            isDeflating = false;
+            if (deflateInterval) {
+                clearInterval(deflateInterval);
+                deflateInterval = null;
+            }
+
+            // Send STOP command to API if sync is enabled
+            if (syncEnabled && apiConnected) {
+                // Convert 0-based indices to 1-based node IDs (matching UI display)
+                const nodeIds = Array.from(selectedCells).map(idx => idx + 1);
+                callDeflateAPI(nodeIds, 'STOP').catch(err => {
+                    console.error('Failed to sync deflate STOP to API:', err);
+                });
+            }
+
+            // Visual feedback
+            document.getElementById('deflate-btn').style.opacity = '1';
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('active');
+            });
+        }
+
+        // Update step value
+        function updateStep() {
+            const stepInput = document.getElementById('step-input');
+            const newStep = parseFloat(stepInput.value);
+            
+            if (isNaN(newStep) || newStep <= 0 || newStep > 0.1) {
+                // Reset to current value if invalid
+                stepInput.value = CONFIG.step;
+                return;
+            }
+            
+            CONFIG.step = newStep;
+        }
+
+        // Update rate value
+        function updateRate() {
+            const rateInput = document.getElementById('rate-input');
+            const newRate = parseFloat(rateInput.value);
+            
+            if (isNaN(newRate) || newRate < 1 || newRate > 200) {
+                // Reset to current value if invalid
+                rateInput.value = CONFIG.rateHz;
+                return;
+            }
+            
+            CONFIG.rateHz = newRate;
+            
+            // If an interval is currently running, restart it with the new rate
+            if (isInflating) {
+                stopInflate();
+                startInflate();
+            } else if (isDeflating) {
+                stopDeflate();
+                startDeflate();
+            }
+        }
+
+        // API Functions
+        const callInflateAPI = async (nodeIds, action) => {
+            try {
+                const response = await fetch(`${CONFIG.apiBaseUrl}/inflate`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        node_ids: nodeIds,
+                        action: action,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+            } catch (error) {
+                console.error("Inflate API error:", error);
+                throw error;
+            }
+        };
+
+        const callDeflateAPI = async (nodeIds, action) => {
+            try {
+                const response = await fetch(`${CONFIG.apiBaseUrl}/deflate`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        node_ids: nodeIds,
+                        action: action,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+            } catch (error) {
+                console.error("Deflate API error:", error);
+                throw error;
+            }
+        };
+
+        // Check API health
+        async function checkApiHealth() {
+            try {
+                const response = await fetch(`${CONFIG.apiBaseUrl}/health`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (response.ok) {
+                    apiConnected = true;
+                    updateApiStatus('connected');
+                } else {
+                    apiConnected = false;
+                    updateApiStatus('disconnected');
+                }
+            } catch (error) {
+                apiConnected = false;
+                updateApiStatus('disconnected');
+            }
+        }
+
+        // Update API status display
+        function updateApiStatus(status) {
+            const statusEl = document.getElementById('api-status');
+            statusEl.className = `api-status ${status}`;
+            
+            if (status === 'connected') {
+                statusEl.textContent = 'Connected';
+            } else if (status === 'checking') {
+                statusEl.textContent = 'Checking...';
+            } else {
+                statusEl.textContent = 'Disconnected';
+            }
+        }
+
+        // Toggle sync
+        function toggleSync() {
+            const toggle = document.getElementById('sync-toggle');
+            syncEnabled = toggle.checked;
+            
+            if (syncEnabled) {
+                // Show checking status and start health check
+                updateApiStatus('checking');
+                checkApiHealth();
+                if (healthCheckInterval) {
+                    clearInterval(healthCheckInterval);
+                }
+                healthCheckInterval = setInterval(checkApiHealth, 5000); // Check every 5 seconds
+            } else {
+                // Stop health check interval
+                if (healthCheckInterval) {
+                    clearInterval(healthCheckInterval);
+                    healthCheckInterval = null;
+                }
+                updateApiStatus('disconnected');
+            }
+        }
+
+        // Update API URL
+        function updateApiUrl() {
+            const urlInput = document.getElementById('api-url-input');
+            const newUrl = urlInput.value.trim();
+            
+            if (newUrl) {
+                // Remove trailing slash if present
+                CONFIG.apiBaseUrl = newUrl.replace(/\/$/, '');
+                // Recheck health if sync is enabled
+                if (syncEnabled) {
+                    checkApiHealth();
+                }
+            }
+        }
+
+        // Reconnect to API
+        function reconnectAPI() {
+            updateApiStatus('checking');
+            checkApiHealth();
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            createGrid();
+            updateButtonStates(); // Disable buttons initially (no cells selected)
+            connectROS();
+            updateSelectedCount();
+            // Initialize API URL input
+            document.getElementById('api-url-input').value = CONFIG.apiBaseUrl;
+        });
+
+        // Prevent context menu on long press (mobile)
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.classList.contains('control-btn')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

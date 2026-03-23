@@ -74,3 +74,11 @@ tests/
 # TacSL sensor
 **/tactile_record/*
 **/gelsight_r15_data/*
+
+# Korus generated assets/datasets
+scripts/korus/data/
+scripts/korus/korus_pressure_pose_dataset/
+scripts/korus/korus_pressure_pose_dataset_images/
+scripts/korus/korus_pressure_pose_dataset_final/
+scripts/korus/assets/npz/
+scripts/korus/**/*.zip

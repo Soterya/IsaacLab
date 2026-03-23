@@ -388,7 +388,7 @@ def main():
     sim = sim_utils.SimulationContext(sim_cfg)
 
     # Set main camera
-    sim.set_camera_view(eye=[0.5, 0.6, 1.0], target=[-0.1, 0.1, 0.5])
+    sim.set_camera_view(eye=(0.5, 0.6, 1.0), target=(-0.1, 0.1, 0.5))
 
     # Create scene based on contact object type
     if args_cli.contact_object_type == "cube":

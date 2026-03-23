@@ -69,7 +69,7 @@ def main():
         physics_dt=1.0 / 60.0, rendering_dt=1.0 / 60.0, sim_params=sim_params, backend="torch", device="cuda:0"
     )
     # Set main camera
-    set_camera_view([0.0, 30.0, 25.0], [0.0, 0.0, -2.5])
+    set_camera_view((0.0, 30.0, 25.0), (0.0, 0.0, -2.5))
 
     # Parameters
     num_balls = 128

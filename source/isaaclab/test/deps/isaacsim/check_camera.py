@@ -73,7 +73,7 @@ def main():
     # Load kit helper
     world = World(physics_dt=0.005, rendering_dt=0.005, backend="torch", device="cpu")
     # Set main camera
-    set_camera_view([2.5, 2.5, 2.5], [0.0, 0.0, 0.0])
+    set_camera_view((2.5, 2.5, 2.5), (0.0, 0.0, 0.0))
 
     # Enable flatcache which avoids passing data over to USD structure
     # this speeds up the read-write operation of GPU buffers

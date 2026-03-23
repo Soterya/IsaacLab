@@ -83,7 +83,7 @@ def main():
     # Load kit helper
     world = World(physics_dt=0.005, rendering_dt=0.005, backend="torch", device="cuda:0")
     # Set main camera
-    set_camera_view([2.5, 2.5, 2.5], [0.0, 0.0, 0.0])
+    set_camera_view((2.5, 2.5, 2.5), (0.0, 0.0, 0.0))
 
     # Enable hydra scene-graph instancing
     # this is needed to visualize the scene when flatcache is enabled

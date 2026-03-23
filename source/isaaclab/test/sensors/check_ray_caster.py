@@ -89,7 +89,7 @@ def main():
 
     sim = SimulationContext(SimulationCfg())
     # Set main camera
-    sim.set_camera_view([0.0, 30.0, 25.0], [0.0, 0.0, -2.5])
+    sim.set_camera_view((0.0, 30.0, 25.0), (0.0, 0.0, -2.5))
 
     # Parameters
     num_envs = args_cli.num_envs

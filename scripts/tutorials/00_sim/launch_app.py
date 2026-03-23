@@ -59,7 +59,7 @@ def design_scene():
 
     # spawn a cuboid
     cfg_cuboid = sim_utils.CuboidCfg(
-        size=[args_cli.size] * 3,
+        size=[args_cli.size] * 3, # type: ignore
         visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 1.0, 1.0)),
     )
     # Spawn cuboid, altering translation on the z-axis to scale to its size

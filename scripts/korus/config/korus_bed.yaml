@@ -1,7 +1,7 @@
 env_usd: "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Environments/Grid/default_environment.usd"
-korusbed_usd: "file:///home/rutwik/IsaacLab/scripts/korus/assets/inflatable_cell_all.usd"
-# humanoid_usd: "file:///home/rutwik/IsaacLab/scripts/korus/assets/usd/softbody_humanoid.usd"
-humanoid_usd: "file:///home/rutwik/IsaacLab/scripts/korus/assets/usd/0005/humanoid_0005.usd"
+korusbed_usd: "file:///home/rutwik/korus-sim-devel/devel/IsaacLab/scripts/korus/assets/inflatable_cell_all.usd"
+# humanoid_usd: "file:///home/rutwik/korus-sim-devel/devel/IsaacLab/scripts/korus/assets/usd/softbody_humanoid.usd"
+humanoid_usd: "file:///home/rutwik/korus-sim-devel/devel/IsaacLab/scripts/korus/assets/usd/0005/humanoid_0005.usd"
 
 # geometry / layout
 ground_to_base_bottom : 0.9

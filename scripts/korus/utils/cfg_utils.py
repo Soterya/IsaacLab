@@ -1,5 +1,5 @@
 import yaml
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Tuple, List, Optional
 
 # ----------------------
@@ -38,7 +38,7 @@ class AppCfg:
     cols: int = 1
 
     # material
-    material: MaterialCfg = MaterialCfg()
+    material: MaterialCfg = field(default_factory=MaterialCfg)
 
     # derived (computed later)
     base_origin  : Tuple[float, float, float]   = None # type: ignore
